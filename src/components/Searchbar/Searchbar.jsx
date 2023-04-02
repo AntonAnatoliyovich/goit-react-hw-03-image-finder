@@ -1,6 +1,6 @@
 import { Component } from 'react';
-import sass from './Searchbar.module.scss';
 import { IoSearchOutline } from 'react-icons/io5';
+import sass from './Searchbar.module.scss';
 import PropTypes from 'prop-types';
 
 class Searchbar extends Component {
