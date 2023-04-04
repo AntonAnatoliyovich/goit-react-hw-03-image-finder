@@ -15,15 +15,22 @@ class ImageGallery extends Component {
         status: 'idle',
         isModalOpen: false,
         modalImg: '',
+        totalHits: 0,
     };
+
+    normalizeData(hits) {
+        return hits.map(item => ({ id: item.id, webformatURL: item.webformatURL, largeImageURL: item.largeImageURL, tags: item.tags}))
+    }
 
     componentDidUpdate(prevProps, prevState) {
         const { page, images } = this.state;
         try {
         if (page !== prevState.page && page !== 1) {
             fetchData(this.props.query, page).then(response => {
+            const normalizeHits = this.normalizeData(response.hits)
+                
             this.setState({
-                images: [...images, ...response.hits],
+                images: [...images, ...normalizeHits],
                 status: 'resolved',
             });
             });
@@ -31,15 +38,18 @@ class ImageGallery extends Component {
 
         if (prevProps.query !== this.props.query) {
             fetchData(this.props.query, 1).then(response => {
+            const normalizeHits = this.normalizeData(response.hits)
+
             if (!response.hits.length) {
-                this.setState({ status: 'rejected' });
+                this.setState({ status: 'rejected', images: [] });
                 return;
             }
 
             this.setState({
-                images: response.hits,
+                images: normalizeHits,
                 status: 'resolved',
                 page: 1,
+                totalHits: response.totalHits,
             });
 
             if (response.totalHits === images.length + response.hits.length) {
@@ -74,7 +84,7 @@ class ImageGallery extends Component {
     };
 
     render() {
-        const { status, images, modalImg, isModalOpen } = this.state;
+        const { status, images, modalImg, isModalOpen, totalHits } = this.state;
         return (
         <>
             <ul className={sass.imageGallery}>
@@ -90,7 +100,7 @@ class ImageGallery extends Component {
             })}
             </ul>
             {status === 'pending' && <Loader />}
-            {status !== 'idle' && status !== 'pending' && images.length !== 0 && (
+            {status !== 'idle' && status !== 'pending' && images.length !== 0 && images.length < totalHits && (
             <Button onLoadMore={this.onLoadMore} />
             )}
             {status === 'rejected' && <Error />}
